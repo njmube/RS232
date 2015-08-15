@@ -20,11 +20,13 @@ namespace RS232
     public partial class MainWindow : Window
     {
         private static SerialPort comPort = new SerialPort();
-        private static byte[] ReadBuffer = null;
-        private static byte[] WriteBuffer = null;
+        
         public MainWindow()
         {
             InitializeComponent();
+            SendMode.Items.Add("ASCII");
+            SendMode.Items.Add("HEX");
+            
         }
 
         private void InitBaud()
@@ -65,21 +67,61 @@ namespace RS232
             if (comBox.Text.Length != 0)
                 Port.BaudRate = Convert.ToInt32(baudBox.Text);
             else
-                MessageBox.Show("Select baudrate.");
+                MessageBox.Show("Select BaudRate.");
+            
             Port.DataBits = 8;
             Port.Parity = (Parity)0;
             Port.StopBits = (StopBits)1;
+            
             try
             {
+                Port.DataReceived += Port_DataReceived;
+                
                 Port.Open();
             }
             catch(Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
+            
+            
                 
                      
         }
+        
+        void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            //throw new NotImplementedException();
+            var ReadBuffer = new Byte[comPort.BytesToRead];
+            try
+            {
+                comPort.BaseStream.ReadAsync(ReadBuffer, 0, comPort.BytesToRead);
+                
+                
+                
+                    Dispatcher.BeginInvoke(new Action(delegate()
+                    {
+                        InBox.Items.Add(BitConverter.ToString(ReadBuffer).Replace("-", " "));
+                        
+                    }));
+                
+            }
+            catch(Exception ex)
+            {
+                if(comPort.BytesToRead > ReadBuffer.Length)
+                {
+                    ReadBuffer = new byte[comPort.BytesToRead];
+                    comPort.BaseStream.ReadAsync(ReadBuffer, 0, comPort.BytesToRead);
+                }
+            }
+            
+            
+                
+            
+            
+        }
+        
+        
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -97,17 +139,65 @@ namespace RS232
             
         }
 
-        private async void btnOpen_Click(object sender, RoutedEventArgs e)
+        private void btnOpen_Click(object sender, RoutedEventArgs e)
         {
             InitPort(comPort);
-            ReadBuffer = new byte[comPort.BaseStream.Length];
-            await comPort.BaseStream.ReadAsync(ReadBuffer, 0, (int)comPort.BaseStream.Length);
-            InBytes.Items.Add(ReadBuffer.ToString());
+            
+            
+            
+
+                        
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
             comPort.Close();
+        }
+        private void SendData()
+        {
+            var OutBuffer = new byte[Out.Text.Length];
+            OutBuffer = Encoding.ASCII.GetBytes(Out.Text);
+            if (Convert.ToString(SendMode.Text) == "HEX")
+            {
+                try
+                {
+                    comPort.BaseStream.WriteAsync(OutBuffer, 0, OutBuffer.Length);
+                }
+                catch (Exception ex)
+                {
+                    InitPort(comPort);
+                }
+                OutBox.Items.Add(BitConverter.ToString(OutBuffer).Replace("-", " "));
+            }
+            else if (Convert.ToString(SendMode.Text) == "ASCII")
+            {
+
+                try
+                {
+                    comPort.BaseStream.WriteAsync(OutBuffer, 0, OutBuffer.Length);
+                }
+                catch (Exception ex)
+                {
+                    InitPort(comPort);
+                }
+                OutBox.Items.Add(System.Text.ASCIIEncoding.ASCII.GetString(OutBuffer));
+            }
+            else
+            {
+                MessageBox.Show("Please select mode");
+            }
+        }
+        private void Out_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Enter)
+            {
+                SendData();                
+            }
+        }
+
+        private void Send_Click(object sender, RoutedEventArgs e)
+        {
+            SendData();
         }
 
         
