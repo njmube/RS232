@@ -26,7 +26,6 @@ namespace RS232
             InitializeComponent();
             SendMode.Items.Add("ASCII");
             SendMode.Items.Add("HEX");
-            
         }
 
         private void InitBaud()
@@ -46,7 +45,6 @@ namespace RS232
         {
             if(Port.IsOpen)
                 Port.Close();
-                           
         }
         private void InitPort(SerialPort Port)
         {
@@ -60,7 +58,6 @@ namespace RS232
                 {
                     Port.Close();
                 }
-
             }
             else
                 MessageBox.Show("Select COM port.");
@@ -68,25 +65,18 @@ namespace RS232
                 Port.BaudRate = Convert.ToInt32(baudBox.Text);
             else
                 MessageBox.Show("Select BaudRate.");
-            
             Port.DataBits = 8;
             Port.Parity = (Parity)0;
             Port.StopBits = (StopBits)1;
-            
             try
             {
                 Port.DataReceived += Port_DataReceived;
-                
                 Port.Open();
             }
             catch(Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-            
-            
-                
-                     
         }
         
         void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -96,15 +86,11 @@ namespace RS232
             try
             {
                 comPort.BaseStream.ReadAsync(ReadBuffer, 0, comPort.BytesToRead);
-                
-                
-                
-                    Dispatcher.BeginInvoke(new Action(delegate()
-                    {
-                        InBox.Items.Add(BitConverter.ToString(ReadBuffer).Replace("-", " "));
-                        
-                    }));
-                
+                Dispatcher.BeginInvoke(new Action(delegate()
+                {
+                    InBox.Items.Add(BitConverter.ToString(ReadBuffer).Replace("-", " "));
+
+                }));
             }
             catch(Exception ex)
             {
@@ -114,11 +100,6 @@ namespace RS232
                     comPort.BaseStream.ReadAsync(ReadBuffer, 0, comPort.BytesToRead);
                 }
             }
-            
-            
-                
-            
-            
         }
         
         
@@ -136,17 +117,11 @@ namespace RS232
                     comBox.Items.Add(COMList[i]);
             }
             InitBaud();        
-            
         }
 
         private void btnOpen_Click(object sender, RoutedEventArgs e)
         {
             InitPort(comPort);
-            
-            
-            
-
-                        
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -171,7 +146,6 @@ namespace RS232
             }
             else if (Convert.ToString(SendMode.Text) == "ASCII")
             {
-
                 try
                 {
                     comPort.BaseStream.WriteAsync(OutBuffer, 0, OutBuffer.Length);
@@ -198,8 +172,6 @@ namespace RS232
         private void Send_Click(object sender, RoutedEventArgs e)
         {
             SendData();
-        }
-
-        
+        }        
     }
 }
